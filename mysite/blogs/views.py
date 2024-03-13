@@ -1,9 +1,31 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from category.models import Category
+from .models import Blogs
+from django.core.paginator import Paginator, EmptyPage, InvalidPage
 
 # Create your views here.
 def Index(request):
     # return HttpResponse("<h1>Hello Django Framework</h1>")
     categories = Category.objects.all()
-    return render(request,"frontend/index.html",{'categories':categories})
+    blogs = Blogs.objects.all()
+    latest = Blogs.objects.all().order_by('-pk')[:2]
+    
+    #pagination
+    paginator = Paginator(blogs,2)
+    try:
+        page = int(request.GET.get('page','1'))
+    except:
+        page = 1
+        
+    try:
+        blogPerpage = paginator.page(page)
+    except (EmptyPage,InvalidPage):    
+        blogPerpage = paginator.page(paginator.num_pages)
+    
+    return render(request,"frontend/index.html",{'categories':categories,'blogs':blogPerpage,'latest':latest})
+
+def blogDetail(request,id):
+    singleblog = Blogs.objects.get(id=id)
+    # print(singleblog)
+    return render(request,"frontend/blogDetail.html",{"blog":singleblog})
